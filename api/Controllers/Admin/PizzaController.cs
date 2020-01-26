@@ -3,6 +3,7 @@ using System.Linq;
 using api.Dto;
 using api.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace api.Controllers.Admin
 {
@@ -22,7 +23,7 @@ namespace api.Controllers.Admin
         [HttpPut]
         public IActionResult UpsertPizza(PizzaDTO pizzaDTO)
         {
-            var pizza = _context.PizzaDefinition.FirstOrDefault(it => it.Name == pizzaDTO.Name);
+            var pizza = _context.PizzaDefinition.Include(it => it.PizzaIntegrients).FirstOrDefault(it => it.Name == pizzaDTO.Name);
             var isInsert = pizza == null;
             if (isInsert)
             {

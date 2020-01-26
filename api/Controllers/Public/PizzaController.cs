@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using api.Dto;
 using api.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace api.Controllers.Public
 {
@@ -24,23 +24,33 @@ namespace api.Controllers.Public
         [HttpGet]
         public IActionResult getPizza([FromQuery(Name = "integrients")] string[] integrients)
         {
+            List<PizzaDefinition> pizzaList = null;
             if(integrients == null || integrients.Length == 0)
             {
-                return Ok(_context.PizzaDefinition.ToList());
+               pizzaList = _context.PizzaDefinition.Include(it => it.PizzaIntegrients).ToList();
             }
             else
             {
-                return getPizzaByIntegrients(integrients);
+                pizzaList = getPizzaByIntegrients(integrients);
             }
+            return Ok(pizzaList.Select(pizza => new PizzaDTO
+            {
+                Name = pizza.Name,
+                Ingredients = pizza.PizzaIntegrients.Select(pi => new IngredientsDTO
+                {
+                    Name = pi.IngredientName,
+                    Price = _context.Ingredient.FirstOrDefault(it => it.Name == pi.IngredientName).Price
+                }).ToList()
+            }).ToList());;
         }
 
-        private IActionResult getPizzaByIntegrients(string[] integrients)
+        private List<PizzaDefinition> getPizzaByIntegrients(string[] integrients)
         {
-            return Ok(_context.PizzaDefinition.Where(
+            return _context.PizzaDefinition.Include(it => it.PizzaIntegrients).Where(
                 PizzaDefinition => !integrients.Select(
                     integrient => PizzaDefinition.PizzaIntegrients.FirstOrDefault(it => it.IngredientName == integrient) != null
                 ).Contains(false)
-            ));;
+            ).ToList();
         }
 
     }
