@@ -21,17 +21,18 @@ namespace api.Controllers.Public
             _context = context;
         }
 
+
         [HttpGet]
-        public IActionResult getPizza([FromQuery(Name = "integrients")] string[] integrients)
+        public IActionResult getPizza([FromQuery(Name = "indegrients")] string[] indegrients)
         {
             List<PizzaDefinition> pizzaList = null;
-            if(integrients == null || integrients.Length == 0)
+            if(indegrients == null || indegrients.Length == 0)
             {
                pizzaList = _context.PizzaDefinition.Include(it => it.PizzaIntegrients).ToList();
             }
             else
             {
-                pizzaList = getPizzaByIntegrients(integrients);
+                pizzaList = getPizzaByIntegrients(indegrients);
             }
             return Ok(pizzaList.Select(pizza => new PizzaDTO
             {
@@ -51,6 +52,13 @@ namespace api.Controllers.Public
                     integrient => PizzaDefinition.PizzaIntegrients.FirstOrDefault(it => it.IngredientName == integrient) != null
                 ).Contains(false)
             ).ToList();
+        }
+
+        [HttpGet]
+        [Route("/api/pizza/indegrients")]
+        public IActionResult getAllIndegrients()
+        {
+            return Ok(_context.Ingredient.ToList());
         }
 
     }
