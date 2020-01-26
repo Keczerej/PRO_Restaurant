@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using System.Collections.Generic;
 using System.Runtime.Serialization;
 
 namespace api.Dto
@@ -16,6 +17,19 @@ namespace api.Dto
         THIRD_PIZZA_GRATIS,
         THIRTY_PERCENT_OFF,
         FREE_DELIVERY
+    }
+
+    public class PizzaDTO
+    {
+        public string Name { get; set; }
+
+        public virtual List<IngredientsDTO> Ingredients { get; set; }
+    }
+
+    public class IngredientsDTO
+    {
+        public string Name { get; set; }
+        public int Price { get; set; }
     }
 
 }
