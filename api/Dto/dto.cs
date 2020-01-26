@@ -20,6 +20,15 @@ namespace api.Dto
     {
         public OrderDefinitionDTO PizzaDefinition { get; set; }
         public string Phone { get; set; }
+
+        public bool payOnline { get; set; }
+    }
+
+    public class NewOrderResponseDTO
+    {
+        public string uid { get; set; }
+
+        public int time { get; set; }
     }
 
     public class OrderDTO
@@ -37,7 +46,7 @@ namespace api.Dto
         IN_REALIZATION,
         WAITING_FOR_DELIVERY,
         IN_DELIVERY,
-        DELIVERY
+        DELIVERED
     }
 
     public class OrderDefinitionDTO

@@ -43,6 +43,63 @@ namespace api.Controllers.Public
             }
         }
 
+        [HttpPut]
+        public IActionResult addPizzaOrder(NewOrderDTO newOrderDto)
+        {
+            var SINGLE_ORDER_TIME = 30;
+            var time = SINGLE_ORDER_TIME;
+
+            var order = new Order();
+
+            order.OrderStatusName = Dto.OrderStatus.IN_REALIZATION.ToString();
+            if (newOrderDto.payOnline)
+            {
+                order.OrderStatusName = Dto.OrderStatus.WAITING_FOR_PAYMENT.ToString();
+            }
+
+            order.Phone = newOrderDto.Phone;
+
+            try
+            {
+                order.Price = getOrderPrice(newOrderDto.PizzaDefinition);
+                if(order.Price <= 0)
+                {
+                    return BadRequest();
+                }
+            }
+            catch (BadRequestException ex)
+            {
+                return BadRequest();
+            }
+
+            _context.Order.ToList().ForEach(it =>
+            {
+                if (it.OrderStatusName != Dto.OrderStatus.DELIVERED.ToString())
+                {
+                    time += SINGLE_ORDER_TIME;
+                }
+            });
+
+            order.PizzaDefinition = JsonConvert.SerializeObject(newOrderDto.PizzaDefinition);
+            order.Uid = Guid.NewGuid().ToString();
+
+            //order.Phone = "";
+            //order.Uid = "1";
+            //order.OrderStatusName = "";
+            //order.PizzaDefinition = "";
+            //order.Price = 10;
+
+            _context.Order.Add(order);
+            _context.SaveChanges();
+
+            return Ok(new NewOrderResponseDTO()
+            {
+                time = time,
+                uid = order.Uid
+            }
+            );
+        }
+
         [HttpPost("{uid}/paid")]
         public IActionResult paidOrderByUid(String uid)
         {
@@ -61,13 +118,25 @@ namespace api.Controllers.Public
         }
 
         [HttpGet("{uid}/price")]
-        public IActionResult getOrderPrice(OrderDefinitionDTO pizzaDefinition)
+        private IActionResult getOrderPriceFromApi(OrderDefinitionDTO pizzaDefinition)
+        {
+            try
+            {
+                return Ok(getOrderPrice(pizzaDefinition));
+            } 
+            catch (BadRequestException ex)
+            {
+                return BadRequest();
+            }
+        }
+
+        private int getOrderPrice(OrderDefinitionDTO pizzaDefinition)
         {
             var DELIVERY_PRICE = 10.0;
             var price = DELIVERY_PRICE;
             double minPizzaPrice = double.MaxValue;
 
-            if (pizzaDefinition.pizza.Count == 0) return Ok(0.0);
+            if (pizzaDefinition.pizza.Count == 0) return 0;
 
             foreach(var p in pizzaDefinition.pizza)
             {
@@ -77,7 +146,7 @@ namespace api.Controllers.Public
                     var ingredient = _context.Ingredient.FirstOrDefault(it => it.Name == i);
                     if(ingredient == null)
                     {
-                        return BadRequest();
+                        throw new BadRequestException();
                     }
                     else
                     {
@@ -93,14 +162,14 @@ namespace api.Controllers.Public
 
             if(pizzaDefinition.PromotionName == null)
             {
-                return Ok(price);
+                return (int) price;
             }
             else
             {
                 var promotion = _context.Promotion.FirstOrDefault(it => it.Name == pizzaDefinition.PromotionName);
                 if(promotion == null)
                 {
-                    return BadRequest();
+                    throw new BadRequestException();
                 }
                 else
                 {
@@ -133,12 +202,15 @@ namespace api.Controllers.Public
                             }
                     }
                 }
-                return Ok(price);
+                return (int) price;
             }
 
         }
 
     }
 
+    class BadRequestException : Exception
+    {
 
+    }
 }
