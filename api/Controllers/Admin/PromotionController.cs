@@ -6,9 +6,9 @@ using api.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace api.Controllers
+namespace api.Controllers.Admin
 {
-    [Route("api/public/promotion")]
+    [Route("api/promotion")]
     [ApiController]
     public class PromotionController : ControllerBase
     {
@@ -20,10 +20,17 @@ namespace api.Controllers
             _context = context;
         }
 
-        [HttpGet]
-        public IActionResult GetPromotions()
+        [HttpDelete]
+        public IActionResult DeletePromotion(string name)
         {
-            return Ok(_context.Promotion.ToList());
+            var promotion = _context.Promotion.FirstOrDefault(it => it.Name == name);
+            if(promotion == null)
+            {
+                return NotFound();
+            }
+            _context.Promotion.Remove(promotion);
+            _context.SaveChanges();
+            return Ok();
         }
     }
 }
